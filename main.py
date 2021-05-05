@@ -37,14 +37,17 @@ classes = ['Chair', 'Door']
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
+
 def recogniseText(imagePath):
-    im = Image.open(imagePath)  # the second one
-    im = im.filter(ImageFilter.MedianFilter())
-    enhancer = ImageEnhance.Contrast(im)
-    im = enhancer.enhance(2)
-    im = im.convert('1')
-    im.save('filteredText.jpeg')
-    text = pytesseract.image_to_string(Image.open('filteredText.jpeg'))
+    # im = Image.open(imagePath)  # the second one
+    # im = im.filter(ImageFilter.MedianFilter())
+    # enhancer = ImageEnhance.Contrast(im)
+    # im = enhancer.enhance(2)
+    # im = im.convert('1')
+    preprocessed = preprocessImage(imagePath)
+    cv2.imwrite('preprocess.jpeg', preprocessed)
+    # Image.open('preprocess.jpeg')
+    text = pytesseract.image_to_string('preprocess.jpeg')
     return text
 
 
@@ -78,19 +81,81 @@ def classifyImage(image, model, classes):
 def get_filename(fname: str):
     fileName = fname + '.jpg'
     print(fileName)
-    path = "D:/Resumes/Dev-Reddit/uploads/" + fileName
+    path = "D:/Web Dev/Projects/FYP-Server/uploads/D:/Web Dev/Projects/FYP-Server/uploads/" + fileName
     image = cv2.imread(path, 1)
     PILImage = Image.fromarray(image)
-    print(classifyImage(PILImage, model, classes))
-    return fname + '.jpg'
+    result = classifyImage(PILImage, model, classes)
+    return result
 
 
 @app.post('/filenameText')
 def get_filename(fname: str):
     fileName = fname + '.jpg'
     print(fileName)
-    path = "D:/Resumes/Dev-Reddit/uploads/" + fileName
+    path = "D:/Web Dev/Projects/FYP-Server/uploads/" + fileName
     text = recogniseText(path)
     print(text)
+    return text
 
-    return fname + '.jpg'
+
+# get grayscale image
+def get_grayscale(image):
+    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+
+# noise removal
+def remove_noise(image):
+    return cv2.medianBlur(image, 5)
+
+
+# thresholding
+def thresholding(image):
+    return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+
+# dilation
+def dilate(image):
+    kernel = np.ones((5, 5), np.uint8)
+    return cv2.dilate(image, kernel, iterations=1)
+
+
+# erosion
+def erode(image):
+    kernel = np.ones((5, 5), np.uint8)
+    return cv2.erode(image, kernel, iterations=1)
+
+
+# opening - erosion followed by dilation
+def opening(image):
+    kernel = np.ones((5, 5), np.uint8)
+    return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+
+
+# canny edge detection
+def canny(image):
+    return cv2.Canny(image, 100, 200)
+
+
+# skew correction
+def deskew(image):
+    coords = np.column_stack(np.where(image > 0))
+    angle = cv2.minAreaRect(coords)[-1]
+    if angle < -45:
+        angle = -(90 + angle)
+    else:
+        angle = -angle
+        (h, w) = image.shape[:2]
+        center = (w // 2, h // 2)
+        M = cv2.getRotationMatrix2D(center, angle, 1.0)
+        rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    return
+
+
+def preprocessImage(path):
+    print(path)
+    image = cv2.imread(path)
+    grayImg = get_grayscale(image)
+    threshImg = thresholding(grayImg)
+    #openingImg = opening(threshImg)
+    ##cannyImg = canny(openingImg)
+    return threshImg
