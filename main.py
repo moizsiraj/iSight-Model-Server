@@ -22,20 +22,31 @@ model = models.resnet18(pretrained=True)
 for param in model.parameters():
     param.requires_grad = False
 # print(model)
-model.fc = nn.Sequential(nn.Linear(512, 128),
+model.fc = nn.Sequential(nn.Linear(512, 256),
                          nn.ReLU(),
                          nn.Dropout(0.2),
-                         nn.Linear(128, 2),
+                         nn.Linear(256, 5),
                          nn.LogSoftmax(dim=1))
 model.to(device);
 
-state_dict = torch.load('chairdoorLatest.pth', map_location='cpu')
+state_dict = torch.load('5Classes.pth', map_location='cpu')
 model.load_state_dict(state_dict)
 model.eval()
 
-classes = ['Chair', 'Door']
+classes = ['bed', 'chair', "office chair", "sofa", 'table']
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+
+def textOrObject(imagePath, model, classes):
+    result = ""
+    result = recogniseText(imagePath)
+    print(len(result))
+    if len(result) <= 4:
+        result = classifyImage(imagePath, model, classes)
+        return "This is a " + str(result)
+    else:
+        return result
 
 
 def recogniseText(imagePath):
@@ -51,13 +62,15 @@ def recogniseText(imagePath):
     return text
 
 
-def classifyImage(image, model, classes):
+def classifyImage(path, model, classes):
+    image = cv2.imread(path, 1)
+    PILImage = Image.fromarray(image)
     testTransforms = transforms.Compose([transforms.Resize(255),
                                          transforms.CenterCrop(224),
                                          transforms.ToTensor(),
                                          transforms.Normalize([0.485, 0.456, 0.406],
                                                               [0.229, 0.224, 0.225])])
-    input = testTransforms(image)
+    input = testTransforms(PILImage)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input = input.to(device)
 
@@ -70,10 +83,10 @@ def classifyImage(image, model, classes):
     predictedClass = torch.squeeze(predictedClass)
 
     mode = torch.mode(predictedClass, 0)
-    fig = plt.figure(figsize=(28, 8))
-    ax = fig.add_subplot(2, 20 / 2, 1, xticks=[], yticks=[])
-    plt.imshow(np.transpose(input.cpu().numpy(), (1, 2, 0)).astype('uint8'))
-    ax.set_title(classes[mode[0].item()])
+    # fig = plt.figure(figsize=(28, 8))
+    # ax = fig.add_subplot(2, 20 / 2, 1, xticks=[], yticks=[])
+    # plt.imshow(np.transpose(input.cpu().numpy(), (1, 2, 0)).astype('uint8'))
+    # ax.set_title(classes[mode[0].item()])
     return classes[mode[0].item()]
 
 
@@ -81,10 +94,9 @@ def classifyImage(image, model, classes):
 def get_filename(fname: str):
     fileName = fname + '.jpg'
     print(fileName)
-    path = "D:/Web Dev/Projects/FYP-Server/uploads/D:/Web Dev/Projects/FYP-Server/uploads/" + fileName
-    image = cv2.imread(path, 1)
-    PILImage = Image.fromarray(image)
-    result = classifyImage(PILImage, model, classes)
+    path = "D:/Web Dev/Projects/FYP-Server/uploads/" + fileName
+    result = textOrObject(path, model, classes)
+    print(result)
     return result
 
 
@@ -156,6 +168,12 @@ def preprocessImage(path):
     image = cv2.imread(path)
     grayImg = get_grayscale(image)
     threshImg = thresholding(grayImg)
-    #openingImg = opening(threshImg)
+    # openingImg = opening(threshImg)
     ##cannyImg = canny(openingImg)
     return threshImg
+
+
+@app.get('/hello')
+def get_hello():
+    print("hi")
+    return "hello"
