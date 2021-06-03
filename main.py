@@ -35,7 +35,7 @@ model.eval()
 
 classes = ['bed', 'chair', "office chair", "sofa", 'table']
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+#pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 
 def textOrObject(imagePath, model, classes):
@@ -94,7 +94,7 @@ def classifyImage(path, model, classes):
 def get_filename(fname: str):
     fileName = fname + '.jpg'
     print(fileName)
-    path = "D:/Web Dev/Projects/FYP-Server/uploads/" + fileName
+    path = "../../expressBackend/uploads/" + fileName
     result = textOrObject(path, model, classes)
     print(result)
     return result
@@ -104,7 +104,7 @@ def get_filename(fname: str):
 def get_filename(fname: str):
     fileName = fname + '.jpg'
     print(fileName)
-    path = "D:/Web Dev/Projects/FYP-Server/uploads/" + fileName
+    path = "../../expressBackend/uploads/" + fileName
     text = recogniseText(path)
     print(text)
     return text
