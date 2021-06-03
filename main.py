@@ -16,20 +16,20 @@ app = FastAPI()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = models.resnet18(pretrained=True)
+model = models.resnet50(pretrained=True)
 
 # Freeze parameters so we don't backprop through them
 for param in model.parameters():
     param.requires_grad = False
 # print(model)
-model.fc = nn.Sequential(nn.Linear(512, 256),
+model.fc = nn.Sequential(nn.Linear(2048, 512),
                          nn.ReLU(),
                          nn.Dropout(0.2),
-                         nn.Linear(256, 5),
+                         nn.Linear(512, 5),
                          nn.LogSoftmax(dim=1))
 model.to(device);
 
-state_dict = torch.load('5Classes.pth', map_location='cpu')
+state_dict = torch.load('5ClassesRevised-2.pth', map_location='cpu')
 model.load_state_dict(state_dict)
 model.eval()
 
@@ -42,7 +42,7 @@ def textOrObject(imagePath, model, classes):
     result = ""
     result = recogniseText(imagePath)
     print(len(result))
-    if len(result) <= 4:
+    if len(result) <= 25:
         result = classifyImage(imagePath, model, classes)
         return "This is a " + str(result)
     else:
