@@ -42,7 +42,7 @@ def textOrObject(imagePath, model, classes):
     result = ""
     result = recogniseText(imagePath)
     print(len(result))
-    if len(result) <= 25:
+    if len(result) <= 26:
         result = classifyImage(imagePath, model, classes)
         return "This is a " + str(result)
     else:
