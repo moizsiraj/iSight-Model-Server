@@ -29,7 +29,7 @@ model.fc = nn.Sequential(nn.Linear(2048, 512),
                          nn.LogSoftmax(dim=1))
 model.to(device);
 
-state_dict = torch.load('5ClassesRevised-2.pth', map_location='cpu')
+state_dict = torch.load('resnet18-Final.pth', map_location='cpu')
 model.load_state_dict(state_dict)
 model.eval()
 
