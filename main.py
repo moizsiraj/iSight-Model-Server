@@ -16,16 +16,16 @@ app = FastAPI()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = models.resnet18(pretrained=True)
+model = models.resnet50(pretrained=True)
 
 # Freeze parameters so we don't backprop through them
 for param in model.parameters():
     param.requires_grad = False
 # print(model)
-model.fc = nn.Sequential(nn.Linear(512, 128),
+model.fc = nn.Sequential(nn.Linear(2048, 512),
                          nn.ReLU(),
                          nn.Dropout(0.2),
-                         nn.Linear(128, 5),
+                         nn.Linear(512, 5),
                          nn.LogSoftmax(dim=1))
 model.to(device);
 
